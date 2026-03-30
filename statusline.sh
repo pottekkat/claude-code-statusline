@@ -41,7 +41,7 @@ NF_ICON_AGENT="󰛦"             # Robot outline      — agent name
 NF_ICON_WORKTREE="󰘬"          # Source branch      — worktree
 NF_ICON_VERSION=""             # Code brackets      — claude code version
 NF_ICON_STYLE="󰏘"             # Paint brush        — output style
-NF_ICON_TOKENS="󰗴"            # Counter            — token counts
+NF_ICON_TOKENS="󰆙"            # Counter            — token counts
 NF_ICON_RATE="󰔟"              # Hourglass          — rate limits
 NF_ICON_DIRTY="*"              # Dirty indicator    — uncommitted changes
 NF_ICON_BAR_FULL="█"           # Progress bar fill
@@ -547,7 +547,7 @@ main() {
 
     # Tokens
     if has_segment "tokens" && (( TOTAL_INPUT > 0 )); then
-        _append "${dim}In: $(fmt_tokens $TOTAL_INPUT)  Out: $(fmt_tokens $TOTAL_OUTPUT)${reset}"
+        _append "${dim}$(icon "$ICON_TOKENS")$(fmt_tokens $TOTAL_INPUT) ↑  $(fmt_tokens $TOTAL_OUTPUT) ↓${reset}"
     fi
 
     # Effort (only show when non-default)
