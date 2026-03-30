@@ -417,14 +417,14 @@ main() {
 
     # Agent
     if has_segment "agent" && [[ -n "$AGENT_NAME" ]]; then
-        _append "${br_magenta}$(icon "$ICON_AGENT")${AGENT_NAME}${reset}"
+        _append "${white}$(icon "$ICON_AGENT")${br_magenta}${AGENT_NAME}${reset}"
     fi
 
     # Worktree
     if has_segment "worktree" && [[ -n "$WORKTREE_NAME" ]]; then
         local wt="${WORKTREE_NAME}"
         if [[ -n "$WORKTREE_BRANCH" ]]; then wt+=" (${WORKTREE_BRANCH})"; fi
-        _append "${br_cyan}$(icon "$ICON_WORKTREE")${wt}${reset}"
+        _append "${white}$(icon "$ICON_WORKTREE")${br_cyan}${wt}${reset}"
     fi
 
     # Model + context window size
@@ -456,7 +456,7 @@ main() {
         fi
 
         if [[ -n "$ctx_label" ]]; then
-            model_text+=" ${dim}(${ctx_label})${reset}${model_color}"
+            model_text+=" ${white}(${ctx_label})${reset}${model_color}"
         fi
 
         _append "${bold}${model_color}${model_text}${reset}"
@@ -479,21 +479,21 @@ main() {
 
         case "$CONTEXT_STYLE" in
             bar)
-                _append "$(icon "$ICON_CONTEXT")${ctx_color}${pct}%${reset} $(progress_bar "$pct" 8 "$ctx_color")"
+                _append "${white}$(icon "$ICON_CONTEXT")${ctx_color}${pct}%${reset} $(progress_bar "$pct" 8 "$ctx_color")"
                 ;;
             percent)
-                _append "$(icon "$ICON_CONTEXT")${ctx_color}${pct}%${reset}"
+                _append "${white}$(icon "$ICON_CONTEXT")${ctx_color}${pct}%${reset}"
                 ;;
             tokens)
                 local used_tokens=$(( CTX_INPUT + CTX_CACHE_CREATE + CTX_CACHE_READ ))
-                _append "$(icon "$ICON_CONTEXT")${ctx_color}$(fmt_tokens $used_tokens)/$(fmt_tokens $CTX_SIZE)${reset}"
+                _append "${white}$(icon "$ICON_CONTEXT")${ctx_color}$(fmt_tokens $used_tokens)/$(fmt_tokens $CTX_SIZE)${reset}"
                 ;;
         esac
     fi
 
     # Git
     if has_segment "git" && [[ -n "$GIT_BRANCH" ]]; then
-        local git_text="$(icon "$ICON_GIT")${green}${GIT_BRANCH}${reset}"
+        local git_text="${white}$(icon "$ICON_GIT")${green}${GIT_BRANCH}${reset}"
         if [[ "$GIT_DIRTY" == "true" ]]; then
             git_text+="${yellow}${ICON_DIRTY}${reset}"
         fi
@@ -508,7 +508,7 @@ main() {
 
     # Directory
     if has_segment "directory" && [[ -n "$DIR_NAME" ]]; then
-        _append "$(icon "$ICON_FOLDER")${cyan}${DIR_NAME}${reset}"
+        _append "${white}$(icon "$ICON_FOLDER")${cyan}${DIR_NAME}${reset}"
     fi
 
     _flush
@@ -517,10 +517,10 @@ main() {
 
     # Duration
     if has_segment "duration" && (( DURATION_MS > 0 )); then
-        local dur_text="$(icon "$ICON_CLOCK")${dim}$(fmt_duration $DURATION_MS)${reset}"
+        local dur_text="${white}$(icon "$ICON_CLOCK")$(fmt_duration $DURATION_MS)${reset}"
         if has_segment "api_time" && (( API_DURATION_MS > 0 )); then
             local api_pct=$(( API_DURATION_MS * 100 / DURATION_MS ))
-            dur_text+=" ${dim}(API ${api_pct}%)${reset}"
+            dur_text+=" ${white}(API ${api_pct}%)${reset}"
         fi
         _append "$dur_text"
     fi
@@ -547,26 +547,26 @@ main() {
 
     # Tokens
     if has_segment "tokens" && (( TOTAL_INPUT > 0 )); then
-        _append "${dim}$(icon "$ICON_TOKENS")$(fmt_tokens $TOTAL_INPUT) ↑  $(fmt_tokens $TOTAL_OUTPUT) ↓${reset}"
+        _append "${white}$(icon "$ICON_TOKENS")${green}$(fmt_tokens $TOTAL_INPUT) ↑${reset}  ${br_yellow}$(fmt_tokens $TOTAL_OUTPUT) ↓${reset}"
     fi
 
     # Effort (only show when non-default)
     if has_segment "effort" && [[ -n "$EFFORT" && "$EFFORT" != "default" ]]; then
         case "$EFFORT" in
-            high)   _append "$(icon "$ICON_EFFORT")${magenta}High effort${reset}";;
-            low)    _append "$(icon "$ICON_EFFORT")${dim}Low effort${reset}";;
-            medium) _append "$(icon "$ICON_EFFORT")${dim}Medium effort${reset}";;
+            high)   _append "${white}$(icon "$ICON_EFFORT")${magenta}High effort${reset}";;
+            low)    _append "${white}$(icon "$ICON_EFFORT")Low effort${reset}";;
+            medium) _append "${white}$(icon "$ICON_EFFORT")Medium effort${reset}";;
         esac
     fi
 
     # Version
     if has_segment "version" && [[ -n "$VERSION" ]]; then
-        _append "${dim}$(icon "$ICON_VERSION")${VERSION}${reset}"
+        _append "${white}$(icon "$ICON_VERSION")${VERSION}${reset}"
     fi
 
     # Output style
     if has_segment "style" && [[ -n "$OUTPUT_STYLE" && "$OUTPUT_STYLE" != "default" ]]; then
-        _append "$(icon "$ICON_STYLE")${dim}${OUTPUT_STYLE}${reset}"
+        _append "${white}$(icon "$ICON_STYLE")${OUTPUT_STYLE}${reset}"
     fi
 
     _flush
@@ -603,12 +603,12 @@ main() {
             if [[ -n "$pct_5h" ]]; then
                 local rate_color
                 rate_color=$(color_by_pct "$pct_5h")
-                local rt="$(icon "$ICON_RATE")${dim}5 Hour:${reset} ${rate_color}${pct_5h}%${reset}"
+                local rt="${white}$(icon "$ICON_RATE")5 Hour:${reset} ${rate_color}${pct_5h}%${reset}"
                 if [[ "$RATE_STYLE" == "bar" ]]; then
                     rt+=" $(mini_bar "$pct_5h" "$rate_color")"
                 fi
                 if [[ -n "$reset_5h" ]]; then
-                    rt+=" ${dim}Resets ${reset_5h}${reset}"
+                    rt+=" ${white}Resets ${reset_5h}${reset}"
                 fi
                 _append "$rt"
             fi
@@ -638,12 +638,12 @@ main() {
             if [[ -n "$pct_7d" ]]; then
                 local rate_color
                 rate_color=$(color_by_pct "$pct_7d")
-                local rt="${dim}7 Day:${reset} ${rate_color}${pct_7d}%${reset}"
+                local rt="${white}7 Day:${reset} ${rate_color}${pct_7d}%${reset}"
                 if [[ "$RATE_STYLE" == "bar" ]]; then
                     rt+=" $(mini_bar "$pct_7d" "$rate_color")"
                 fi
                 if [[ -n "$reset_7d" ]]; then
-                    rt+=" ${dim}Resets ${reset_7d}${reset}"
+                    rt+=" ${white}Resets ${reset_7d}${reset}"
                 fi
                 _append "$rt"
             fi
@@ -661,7 +661,7 @@ main() {
                     limit_cents=$(echo "$USAGE_DATA" | jq -r '.extra_usage.monthly_limit // 0' 2>/dev/null)
                     used_dollars=$(printf "%.2f" "$(echo "scale=2; ${used_cents:-0} / 100" | bc)")
                     limit_dollars=$(printf "%.2f" "$(echo "scale=2; ${limit_cents:-0} / 100" | bc)")
-                    _append "${dim}Extra:${reset} ${br_yellow}\$${used_dollars}${reset}${dim}/\$${limit_dollars}${reset}"
+                    _append "${white}Extra:${reset} ${br_yellow}\$${used_dollars}${reset}${white}/\$${limit_dollars}${reset}"
                 fi
             fi
         fi
