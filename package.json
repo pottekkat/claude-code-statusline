@@ -1,0 +1,36 @@
+{
+  "name": "claude-code-statusline",
+  "version": "1.0.0",
+  "description": "A beautiful, configurable statusline for Claude Code with NerdFont support",
+  "bin": {
+    "claude-code-statusline": "./bin/install.js"
+  },
+  "scripts": {
+    "postinstall": "node bin/install.js"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "statusline",
+    "statusbar",
+    "nerdfonts",
+    "terminal",
+    "cli"
+  ],
+  "author": "Navendu Pottekkat",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pottekkat/claude-code-statusline"
+  },
+  "files": [
+    "bin/",
+    "statusline.sh",
+    "install.sh",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=14"
+  }
+}
