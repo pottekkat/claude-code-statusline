@@ -34,14 +34,13 @@ NF_ICON_CONTEXT="󰍛"           # Memory chip        — context window usage
 NF_ICON_GIT=""                # Git branch         — git branch name
 NF_ICON_FOLDER=""              # Folder             — current directory
 NF_ICON_CLOCK="󰥔"             # Clock              — session duration
-NF_ICON_COST="󰚞"              # Dollar             — session cost
 NF_ICON_CHANGES="󰦒"           # Swap vertical      — lines added/removed
 NF_ICON_EFFORT=""             # Lightning bolt     — thinking effort
 NF_ICON_AGENT="󰛦"             # Robot outline      — agent name
 NF_ICON_WORKTREE="󰘬"          # Source branch      — worktree
 NF_ICON_VERSION=""             # Code brackets      — claude code version
 NF_ICON_STYLE="󰏘"             # Paint brush        — output style
-NF_ICON_TOKENS="󰆙"            # Counter            — token counts
+NF_ICON_TOKENS="󰚞"            # Counter            — token counts
 NF_ICON_RATE="󰔟"              # Hourglass          — rate limits
 NF_ICON_DIRTY="*"              # Dirty indicator    — uncommitted changes
 NF_ICON_BAR_FULL="█"           # Progress bar fill
@@ -467,10 +466,16 @@ main() {
         local pct=${CTX_PCT:-0}
         pct=${pct%.*}
 
-        # Recalculate % against auto-compact window if set
-        if [[ -n "$AUTO_COMPACT_WINDOW" && "$AUTO_COMPACT_WINDOW" != "0" && "$CTX_SIZE" -gt 0 ]]; then
-            local used_tokens_approx=$(( pct * CTX_SIZE / 100 ))
-            pct=$(( used_tokens_approx * 100 / AUTO_COMPACT_WINDOW ))
+        # Recalculate % against auto-compact window using actual token counts
+        if [[ -n "$AUTO_COMPACT_WINDOW" && "$AUTO_COMPACT_WINDOW" != "0" ]]; then
+            local used_tokens=$(( CTX_INPUT + CTX_CACHE_CREATE + CTX_CACHE_READ ))
+            if (( used_tokens > 0 )); then
+                pct=$(( used_tokens * 100 / AUTO_COMPACT_WINDOW ))
+            elif (( CTX_SIZE > 0 )); then
+                # Fallback: estimate from percentage (less precise)
+                local used_approx=$(( pct * CTX_SIZE / 100 ))
+                pct=$(( used_approx * 100 / AUTO_COMPACT_WINDOW ))
+            fi
             if (( pct > 100 )); then pct=100; fi
         fi
 
