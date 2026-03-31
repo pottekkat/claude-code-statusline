@@ -15,8 +15,8 @@ export LC_NUMERIC=C
 # ── Configuration ──────────────────────────────────────────────────────────────
 CONFIG_FILE="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/statusline-config.json"
 SETTINGS_FILE="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
-CACHE_DIR="/tmp/claude"
-CACHE_TTL=60
+CACHE_DIR="/tmp/claude-statusline"
+CACHE_TTL=300
 
 # ── Default config (overridden by config file) ────────────────────────────────
 USE_NERDFONTS=true
@@ -68,12 +68,10 @@ TXT_ICON_BAR_EMPTY="."
 # ── Load config ───────────────────────────────────────────────────────────────
 load_config() {
     if [[ -f "$CONFIG_FILE" ]]; then
-        local cfg
-        cfg=$(cat "$CONFIG_FILE" 2>/dev/null) || return 0
-        USE_NERDFONTS=$(echo "$cfg" | jq -r 'if has("nerdfonts") then .nerdfonts else true end')
-        SEGMENTS=$(echo "$cfg" | jq -r '.segments // "agent,worktree,model,context,git,directory,duration,cost,lines,tokens,effort,style,rate_5h,rate_7d,extra"')
-        CONTEXT_STYLE=$(echo "$cfg" | jq -r '.context_style // "bar"')
-        RATE_STYLE=$(echo "$cfg" | jq -r '.rate_style // "bar"')
+        USE_NERDFONTS=$(jq -r 'if has("nerdfonts") then .nerdfonts else true end' "$CONFIG_FILE" 2>/dev/null || echo "true")
+        SEGMENTS=$(jq -r '.segments // "agent,worktree,model,context,git,directory,duration,cost,lines,tokens,effort,style,rate_5h,rate_7d,extra"' "$CONFIG_FILE" 2>/dev/null || echo "agent,worktree,model,context,git,directory,duration,cost,lines,tokens,effort,style,rate_5h,rate_7d,extra")
+        CONTEXT_STYLE=$(jq -r '.context_style // "bar"' "$CONFIG_FILE" 2>/dev/null || echo "bar")
+        RATE_STYLE=$(jq -r '.rate_style // "bar"' "$CONFIG_FILE" 2>/dev/null || echo "bar")
     fi
 }
 
@@ -89,12 +87,10 @@ load_config
 # ── ANSI helpers ──────────────────────────────────────────────────────────────
 reset="\033[0m"
 bold="\033[1m"
-dim="\033[2m"
 
 red="\033[31m"
 green="\033[32m"
 yellow="\033[33m"
-blue="\033[34m"
 magenta="\033[35m"
 cyan="\033[36m"
 white="\033[37m"
@@ -253,25 +249,30 @@ get_oauth_token() {
     fi
 
     if command -v security &>/dev/null; then
-        local token
-        token=$(security find-generic-password -s "Claude Code-credentials${service_suffix}" -w 2>/dev/null) || true
-        if [[ -n "$token" ]]; then
-            echo "$token" | jq -r '.claudeAiOauth.accessToken // empty' 2>/dev/null && return
+        local raw parsed
+        raw=$(security find-generic-password -s "Claude Code-credentials${service_suffix}" -w 2>/dev/null) || true
+        if [[ -n "$raw" ]]; then
+            parsed=$(echo "$raw" | jq -r '.claudeAiOauth.accessToken // empty' 2>/dev/null || true)
+            if [[ -n "$parsed" ]]; then echo "$parsed"; return 0; fi
         fi
     fi
 
     local cred_file="$config_dir/.credentials.json"
     if [[ -f "$cred_file" ]]; then
-        jq -r '.claudeAiOauth.accessToken // empty' "$cred_file" 2>/dev/null && return
+        local file_token
+        file_token=$(jq -r '.claudeAiOauth.accessToken // empty' "$cred_file" 2>/dev/null || true)
+        if [[ -n "$file_token" ]]; then echo "$file_token"; return 0; fi
     fi
 
     if command -v secret-tool &>/dev/null; then
-        local token
-        token=$(secret-tool lookup service "Claude Code-credentials${service_suffix}" 2>/dev/null) || true
-        if [[ -n "$token" ]]; then
-            echo "$token" | jq -r '.claudeAiOauth.accessToken // empty' 2>/dev/null && return
+        local raw parsed
+        raw=$(secret-tool lookup service "Claude Code-credentials${service_suffix}" 2>/dev/null) || true
+        if [[ -n "$raw" ]]; then
+            parsed=$(echo "$raw" | jq -r '.claudeAiOauth.accessToken // empty' 2>/dev/null || true)
+            if [[ -n "$parsed" ]]; then echo "$parsed"; return 0; fi
         fi
     fi
+    return 0
 }
 
 # ── Fetch usage data (cached) ────────────────────────────────────────────────
@@ -282,6 +283,7 @@ fetch_usage() {
     cache_hash=$(echo -n "$config_dir" | { shasum -a 256 2>/dev/null || sha256sum; } | cut -d' ' -f1 | head -c 8)
     local cache_file="$CACHE_DIR/statusline-cache-${cache_hash}.json"
 
+    # Serve from cache if fresh enough
     if [[ -f "$cache_file" ]]; then
         local cache_age=999
         if stat -f "%m" "$cache_file" &>/dev/null; then
@@ -294,18 +296,36 @@ fetch_usage() {
         fi
     fi
 
+    # Try to fetch fresh data
+    if ! command -v curl &>/dev/null; then
+        # No curl — serve stale cache if available
+        if [[ -f "$cache_file" ]]; then cat "$cache_file"; else echo "{}"; fi
+        return
+    fi
+
     local token
     token=$(get_oauth_token)
-    if [[ -z "$token" ]]; then echo "{}"; return; fi
+    if [[ -z "$token" ]]; then
+        # No token — serve stale cache if available
+        if [[ -f "$cache_file" ]]; then cat "$cache_file"; else echo "{}"; fi
+        return
+    fi
 
     local response
-    response=$(curl -sf --max-time 5 \
+    response=$(curl -sf --max-time 3 \
         -H "Authorization: Bearer $token" \
         -H "anthropic-beta: oauth-2025-04-20" \
-        "https://api.anthropic.com/api/oauth/usage" 2>/dev/null) || response="{}"
+        "https://api.anthropic.com/api/oauth/usage" 2>/dev/null) || response=""
 
-    echo "$response" > "$cache_file"
-    echo "$response"
+    if [[ -n "$response" && "$response" != "{}" ]]; then
+        echo "$response" > "$cache_file"
+        echo "$response"
+    elif [[ -f "$cache_file" ]]; then
+        # Fetch failed — serve stale cache
+        cat "$cache_file"
+    else
+        echo "{}"
+    fi
 }
 
 # ── has_segment ───────────────────────────────────────────────────────────────

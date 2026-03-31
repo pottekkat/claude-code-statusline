@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 
-const { execSync, spawn } = require("child_process");
+const { spawn } = require("child_process");
 const path = require("path");
-const fs = require("fs");
 
 const SCRIPT_DIR = path.join(__dirname, "..");
 const INSTALL_SCRIPT = path.join(SCRIPT_DIR, "install.sh");

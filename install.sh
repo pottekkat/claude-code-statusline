@@ -11,11 +11,9 @@ YELLOW="\033[33m"
 BLUE="\033[34m"
 MAGENTA="\033[35m"
 CYAN="\033[36m"
-WHITE="\033[37m"
 DIM="\033[2m"
 BOLD="\033[1m"
 RESET="\033[0m"
-BR_BLACK="\033[90m"
 
 # ── Config ────────────────────────────────────────────────────────────────────
 CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
@@ -354,21 +352,20 @@ EOF
     success "Created config at $CONFIG_DEST"
 
     # Update settings.json
+    local statusline_cmd="bash \"$STATUSLINE_DEST\""
     if [[ -f "$SETTINGS_FILE" ]]; then
         local tmp
-        tmp=$(jq '.statusLine = {"type": "command", "command": "bash \"$HOME/.claude/statusline.sh\""}' "$SETTINGS_FILE" 2>/dev/null)
-        if [[ -n "$tmp" ]]; then
-            echo "$tmp" > "$SETTINGS_FILE"
-        fi
+        tmp=$(jq --arg cmd "$statusline_cmd" \
+          '.statusLine = {"type":"command","command":$cmd}' \
+          "$SETTINGS_FILE" 2>/dev/null) || {
+            error "settings.json is not valid JSON: $SETTINGS_FILE"
+            info "Fix it and rerun the installer."
+            exit 1
+        }
+        echo "$tmp" > "$SETTINGS_FILE"
     else
-        cat > "$SETTINGS_FILE" <<EOF
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bash \"\$HOME/.claude/statusline.sh\""
-  }
-}
-EOF
+        jq -n --arg cmd "$statusline_cmd" \
+          '{statusLine:{type:"command",command:$cmd}}' > "$SETTINGS_FILE"
     fi
     success "Updated settings.json"
 
@@ -378,7 +375,18 @@ EOF
     printf "  "
 
     # Generate preview with mock data
-    echo '{"model":{"id":"claude-opus-4-6","display_name":"Opus 4.6 (1M context)"},"cwd":"'"$PWD"'","workspace":{"current_dir":"'"$PWD"'"},"context_window":{"context_window_size":1000000,"used_percentage":42,"total_input_tokens":185000,"total_output_tokens":23000,"current_usage":{"input_tokens":85000,"output_tokens":5000,"cache_creation_input_tokens":50000,"cache_read_input_tokens":50000}},"cost":{"total_cost_usd":1.23,"total_duration_ms":723000,"total_api_duration_ms":145000,"total_lines_added":42,"total_lines_removed":15},"rate_limits":{"five_hour":{"used_percentage":35,"resets_at":'"$(( $(date +%s) + 7200 ))"'},"seven_day":{"used_percentage":12,"resets_at":'"$(( $(date +%s) + 604800 ))"'}},"version":"1.0.34"}' | bash "$STATUSLINE_DEST" 2>/dev/null | while IFS= read -r line; do
+    local now
+    now=$(date +%s)
+    jq -n --arg pwd "$PWD" --argjson r5 "$((now + 7200))" --argjson r7 "$((now + 604800))" '{
+      model:{id:"claude-opus-4-6",display_name:"Opus 4.6 (1M context)"},
+      cwd:$pwd,
+      workspace:{current_dir:$pwd},
+      context_window:{context_window_size:1000000,used_percentage:42,total_input_tokens:185000,total_output_tokens:23000,
+        current_usage:{input_tokens:85000,output_tokens:5000,cache_creation_input_tokens:50000,cache_read_input_tokens:50000}},
+      cost:{total_cost_usd:1.23,total_duration_ms:723000,total_api_duration_ms:145000,total_lines_added:42,total_lines_removed:15},
+      rate_limits:{five_hour:{used_percentage:35,resets_at:$r5},seven_day:{used_percentage:12,resets_at:$r7}},
+      version:"1.0.34"
+    }' | bash "$STATUSLINE_DEST" 2>/dev/null | while IFS= read -r line; do
         printf "  %s\n" "$line"
     done
 
