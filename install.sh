@@ -19,8 +19,16 @@ BR_BLACK="\033[90m"
 
 # ── Config ────────────────────────────────────────────────────────────────────
 CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STATUSLINE_SRC="$SCRIPT_DIR/statusline.sh"
+REPO_URL="https://raw.githubusercontent.com/pottekkat/claude-code-statusline/main"
+
+# Detect if running from a local clone or piped via curl
+if [[ -n "${BASH_SOURCE[0]:-}" && "${BASH_SOURCE[0]}" != "bash" ]]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+else
+    SCRIPT_DIR=""
+fi
+
+STATUSLINE_SRC="${SCRIPT_DIR:+$SCRIPT_DIR/}statusline.sh"
 STATUSLINE_DEST="$CLAUDE_DIR/statusline.sh"
 CONFIG_DEST="$CLAUDE_DIR/statusline-config.json"
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
@@ -126,9 +134,9 @@ detect_nerdfonts() {
 # ── NerdFont test display ────────────────────────────────────────────────────
 show_nerdfonts_test() {
     printf "\n  ${DIM}If these icons render correctly, you have NerdFonts:${RESET}\n"
-    printf "  󰚩  󰍛  󰊕        󰏘    󰗴   \n"
-    printf "  ${DIM}(robot, memory, bolt, branch, folder, clock, dollar,${RESET}\n"
-    printf "  ${DIM} paint, code, counter, diff-add, diff-remove)${RESET}\n\n"
+    printf "  󱚡  󰍛    󰥔    󰏘  󰚞  󰔟  󰛦  󰘬\n"
+    printf "  ${DIM}(model, context, git, folder, clock, effort,${RESET}\n"
+    printf "  ${DIM} style, tokens, rate, agent, worktree)${RESET}\n\n"
 }
 
 # ── Segment selector ──────────────────────────────────────────────────────────
@@ -151,6 +159,7 @@ select_segments() {
         "effort:Thinking effort level:true"
         "version:Claude Code version:false"
         "style:Output style name:false"
+        "api_time:API time % (shown with duration):false"
         "rate_5h:5-hour rate limit:true"
         "rate_7d:7-day rate limit:true"
         "extra:Extra usage credits:true"
@@ -193,17 +202,21 @@ main() {
 
     # ── Check dependencies ────────────────────────────────────────────────────
     local missing=()
-    for cmd in jq git curl bc; do
+    for cmd in jq git bc; do
         if ! command -v "$cmd" &>/dev/null; then
             missing+=("$cmd")
         fi
     done
     if (( ${#missing[@]} > 0 )); then
-        error "Missing dependencies: ${missing[*]}"
+        error "Missing required dependencies: ${missing[*]}"
         info "Please install them first."
         exit 1
     fi
-    success "Dependencies found (jq, git, curl, bc)"
+    success "Required dependencies found (jq, git, bc)"
+
+    if ! command -v curl &>/dev/null; then
+        warn "curl not found — rate limit display will be limited"
+    fi
 
     # ── Check for existing statusline ─────────────────────────────────────────
     if [[ -f "$STATUSLINE_DEST" ]]; then
@@ -258,7 +271,6 @@ main() {
     case "$preset" in
         1)
             segments="model,context,git"
-            compact=true
             context_style="percent"
             rate_style="percent"
             info "Minimal preset selected"
@@ -317,8 +329,16 @@ main() {
     # Ensure directory exists
     mkdir -p "$CLAUDE_DIR"
 
-    # Copy statusline script
-    cp "$STATUSLINE_SRC" "$STATUSLINE_DEST"
+    # Copy or download statusline script
+    if [[ -n "$SCRIPT_DIR" && -f "$STATUSLINE_SRC" ]]; then
+        cp "$STATUSLINE_SRC" "$STATUSLINE_DEST"
+    else
+        info "Downloading statusline.sh..."
+        if ! curl -fsSL "$REPO_URL/statusline.sh" -o "$STATUSLINE_DEST"; then
+            error "Failed to download statusline.sh"
+            exit 1
+        fi
+    fi
     chmod +x "$STATUSLINE_DEST"
     success "Installed statusline.sh to $STATUSLINE_DEST"
 

@@ -10,6 +10,7 @@
 #   ~/.claude/statusline-config.json
 
 set -euo pipefail
+export LC_NUMERIC=C
 
 # ── Configuration ──────────────────────────────────────────────────────────────
 CONFIG_FILE="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/statusline-config.json"
@@ -21,7 +22,7 @@ CACHE_TTL=60
 USE_NERDFONTS=true
 SEGMENTS="agent,worktree,model,context,git,directory,duration,cost,lines,tokens,effort,style,rate_5h,rate_7d,extra"
 CONTEXT_STYLE="bar"    # "bar" | "percent" | "tokens"
-RATE_STYLE="bar"       # "bar" | "inline"
+RATE_STYLE="bar"       # "bar" | "percent"
 
 # ══════════════════════════════════════════════════════════════════════════════
 # ICONS - Edit these to customize your statusline appearance
@@ -34,7 +35,6 @@ NF_ICON_CONTEXT="󰍛"           # Memory chip        — context window usage
 NF_ICON_GIT=""                # Git branch         — git branch name
 NF_ICON_FOLDER=""              # Folder             — current directory
 NF_ICON_CLOCK="󰥔"             # Clock              — session duration
-NF_ICON_CHANGES="󰦒"           # Swap vertical      — lines added/removed
 NF_ICON_EFFORT=""             # Lightning bolt     — thinking effort
 NF_ICON_AGENT="󰛦"             # Robot outline      — agent name
 NF_ICON_WORKTREE="󰘬"          # Source branch      — worktree
@@ -106,7 +106,6 @@ br_yellow="\033[93m"
 br_blue="\033[94m"
 br_magenta="\033[95m"
 br_cyan="\033[96m"
-br_white="\033[97m"
 
 # ── Resolve active icons ─────────────────────────────────────────────────────
 setup_icons() {
@@ -171,11 +170,11 @@ progress_bar() {
     local filled=$(( pct * width / 100 ))
     if (( pct > 0 && filled == 0 )); then filled=1; fi
     local empty=$(( width - filled ))
-    printf "${color}"
-    for ((i=0; i<filled; i++)); do printf "${ICON_BAR_FULL}"; done
-    printf "${br_black}"
-    for ((i=0; i<empty; i++)); do printf "${ICON_BAR_EMPTY}"; done
-    printf "${reset}"
+    printf "%b" "${color}"
+    for ((i=0; i<filled; i++)); do printf "%s" "${ICON_BAR_FULL}"; done
+    printf "%b" "${br_black}"
+    for ((i=0; i<empty; i++)); do printf "%s" "${ICON_BAR_EMPTY}"; done
+    printf "%b" "${reset}"
 }
 
 mini_bar() {
@@ -184,11 +183,11 @@ mini_bar() {
     local filled=$(( pct * width / 100 ))
     if (( pct > 0 && filled == 0 )); then filled=1; fi
     local empty=$(( width - filled ))
-    printf "${color}"
-    for ((i=0; i<filled; i++)); do printf "${ICON_BAR_FULL}"; done
-    printf "${br_black}"
-    for ((i=0; i<empty; i++)); do printf "${ICON_BAR_EMPTY}"; done
-    printf "${reset}"
+    printf "%b" "${color}"
+    for ((i=0; i<filled; i++)); do printf "%s" "${ICON_BAR_FULL}"; done
+    printf "%b" "${br_black}"
+    for ((i=0; i<empty; i++)); do printf "%s" "${ICON_BAR_EMPTY}"; done
+    printf "%b" "${reset}"
 }
 
 # ── Color by percentage (low=good, high=bad) ──────────────────────────────────
@@ -250,7 +249,7 @@ get_oauth_token() {
     local config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
     local service_suffix=""
     if [[ -n "${CLAUDE_CONFIG_DIR:-}" ]]; then
-        service_suffix="-$(echo -n "$CLAUDE_CONFIG_DIR" | shasum -a 256 | cut -d' ' -f1)"
+        service_suffix="-$(echo -n "$CLAUDE_CONFIG_DIR" | { shasum -a 256 2>/dev/null || sha256sum; } | cut -d' ' -f1)"
     fi
 
     if command -v security &>/dev/null; then
@@ -280,7 +279,7 @@ fetch_usage() {
     mkdir -p "$CACHE_DIR"
     local config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
     local cache_hash
-    cache_hash=$(echo -n "$config_dir" | shasum -a 256 | cut -d' ' -f1 | head -c 8)
+    cache_hash=$(echo -n "$config_dir" | { shasum -a 256 2>/dev/null || sha256sum; } | cut -d' ' -f1 | head -c 8)
     local cache_file="$CACHE_DIR/statusline-cache-${cache_hash}.json"
 
     if [[ -f "$cache_file" ]]; then

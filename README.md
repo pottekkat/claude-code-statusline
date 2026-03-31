@@ -36,8 +36,14 @@ Forked from [daniel3303/ClaudeCodeStatusLine](https://github.com/daniel3303/Clau
 npx claude-code-statusline
 ```
 
-This runs an interactive installer that:
-1. Checks dependencies (`jq`, `git`, `curl`, `bc`)
+### One-line Install (curl)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/pottekkat/claude-code-statusline/main/install.sh | bash
+```
+
+Both methods run an interactive installer that:
+1. Checks dependencies (`jq`, `git`, `bc`)
 2. Detects NerdFonts on your system
 3. Lets you choose a preset or pick individual segments
 4. Configures display styles (progress bars, percentages, etc.)
@@ -142,11 +148,14 @@ All NerdFont icons are defined as variables at the top of `statusline.sh`. To ch
 
 ## Dependencies
 
-- `jq` — JSON parsing (required)
-- `git` — Git status info (required)
-- `bc` — Number formatting (required)
-- `curl` — Rate limit API calls (optional, for Pro/Max subscribers)
-- A [NerdFont](https://www.nerdfonts.com/) — Optional but recommended
+**Required:**
+- `jq` — JSON parsing
+- `git` — Git status info
+- `bc` — Number formatting
+
+**Optional:**
+- `curl` — Rate limit API calls (for Pro/Max subscribers)
+- A [NerdFont](https://www.nerdfonts.com/) — For icons (text fallbacks available)
 
 ## How It Works
 

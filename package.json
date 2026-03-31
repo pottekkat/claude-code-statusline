@@ -21,7 +21,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pottekkat/claude-code-statusline"
+    "url": "https://github.com/pottekkat/claude-code-statusline.git"
+  },
+  "homepage": "https://github.com/pottekkat/claude-code-statusline#readme",
+  "bugs": {
+    "url": "https://github.com/pottekkat/claude-code-statusline/issues"
   },
   "files": [
     "bin/",
