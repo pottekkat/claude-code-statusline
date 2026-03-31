@@ -515,8 +515,8 @@ main() {
 
     # ══ LINE 2: Session stats ═════════════════════════════════════════════════
 
-    # Duration
-    if has_segment "duration" && (( DURATION_MS > 0 )); then
+    # Duration (only show after at least 1 second)
+    if has_segment "duration" && (( DURATION_MS > 1000 )); then
         local dur_text="${white}$(icon "$ICON_CLOCK")$(fmt_duration $DURATION_MS)${reset}"
         if has_segment "api_time" && (( API_DURATION_MS > 0 )); then
             local api_pct=$(( API_DURATION_MS * 100 / DURATION_MS ))
