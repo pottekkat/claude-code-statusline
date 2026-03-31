@@ -52,8 +52,6 @@ TXT_ICON_CONTEXT="Ctx"
 TXT_ICON_GIT=""
 TXT_ICON_FOLDER=""
 TXT_ICON_CLOCK=""
-TXT_ICON_COST="$"
-TXT_ICON_CHANGES=""
 TXT_ICON_EFFORT=""
 TXT_ICON_AGENT="Agent:"
 TXT_ICON_WORKTREE="Worktree:"
@@ -118,8 +116,6 @@ setup_icons() {
         ICON_GIT="$NF_ICON_GIT"
         ICON_FOLDER="$NF_ICON_FOLDER"
         ICON_CLOCK="$NF_ICON_CLOCK"
-        ICON_COST="$NF_ICON_COST"
-        ICON_CHANGES="$NF_ICON_CHANGES"
         ICON_EFFORT="$NF_ICON_EFFORT"
         ICON_AGENT="$NF_ICON_AGENT"
         ICON_WORKTREE="$NF_ICON_WORKTREE"
@@ -136,8 +132,6 @@ setup_icons() {
         ICON_GIT="$TXT_ICON_GIT"
         ICON_FOLDER="$TXT_ICON_FOLDER"
         ICON_CLOCK="$TXT_ICON_CLOCK"
-        ICON_COST="$TXT_ICON_COST"
-        ICON_CHANGES="$TXT_ICON_CHANGES"
         ICON_EFFORT="$TXT_ICON_EFFORT"
         ICON_AGENT="$TXT_ICON_AGENT"
         ICON_WORKTREE="$TXT_ICON_WORKTREE"
@@ -368,16 +362,25 @@ main() {
 
     # ── Auto-compact window (effective context limit) ─────────────────────────
     local AUTO_COMPACT_WINDOW=""
+    local AUTO_COMPACT_PCT=""
     if [[ -f "$SETTINGS_FILE" ]]; then
         AUTO_COMPACT_WINDOW=$(jq -r '.env.CLAUDE_CODE_AUTO_COMPACT_WINDOW // empty' "$SETTINGS_FILE" 2>/dev/null) || true
+        AUTO_COMPACT_PCT=$(jq -r '.env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE // empty' "$SETTINGS_FILE" 2>/dev/null) || true
     fi
     # Also check project-level settings
     if [[ -n "$CWD" && -f "$CWD/.claude/settings.json" ]]; then
-        local proj_acw
+        local proj_acw proj_acp
         proj_acw=$(jq -r '.env.CLAUDE_CODE_AUTO_COMPACT_WINDOW // empty' "$CWD/.claude/settings.json" 2>/dev/null) || true
-        if [[ -n "$proj_acw" ]]; then
-            AUTO_COMPACT_WINDOW="$proj_acw"
-        fi
+        proj_acp=$(jq -r '.env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE // empty' "$CWD/.claude/settings.json" 2>/dev/null) || true
+        if [[ -n "$proj_acw" ]]; then AUTO_COMPACT_WINDOW="$proj_acw"; fi
+        if [[ -n "$proj_acp" ]]; then AUTO_COMPACT_PCT="$proj_acp"; fi
+    fi
+
+    # Calculate effective compact limit (window * compact percentage)
+    local EFFECTIVE_COMPACT_LIMIT=""
+    if [[ -n "$AUTO_COMPACT_WINDOW" && "$AUTO_COMPACT_WINDOW" != "0" ]]; then
+        local compact_pct="${AUTO_COMPACT_PCT:-83}"
+        EFFECTIVE_COMPACT_LIMIT=$(( AUTO_COMPACT_WINDOW * compact_pct / 100 ))
     fi
 
     # ── Git info ──────────────────────────────────────────────────────────────
@@ -439,14 +442,14 @@ main() {
         local model_text="$(icon "$ICON_MODEL")${clean_name}"
 
         local ctx_label=""
-        if [[ -n "$AUTO_COMPACT_WINDOW" && "$AUTO_COMPACT_WINDOW" != "0" ]]; then
-            local acw_k=$(( AUTO_COMPACT_WINDOW / 1000 ))
+        if [[ -n "$EFFECTIVE_COMPACT_LIMIT" && "$EFFECTIVE_COMPACT_LIMIT" != "0" ]]; then
+            local eff_k=$(( EFFECTIVE_COMPACT_LIMIT / 1000 ))
             if (( CTX_SIZE >= 1000000 )); then
-                ctx_label="${acw_k}K/1M"
+                ctx_label="${eff_k}K/1M"
             elif (( CTX_SIZE > 0 )); then
-                ctx_label="${acw_k}K/$(( CTX_SIZE / 1000 ))K"
+                ctx_label="${eff_k}K/$(( CTX_SIZE / 1000 ))K"
             else
-                ctx_label="${acw_k}K"
+                ctx_label="${eff_k}K"
             fi
         elif (( CTX_SIZE >= 1000000 )); then
             ctx_label="1M"
@@ -466,15 +469,15 @@ main() {
         local pct=${CTX_PCT:-0}
         pct=${pct%.*}
 
-        # Recalculate % against auto-compact window using actual token counts
-        if [[ -n "$AUTO_COMPACT_WINDOW" && "$AUTO_COMPACT_WINDOW" != "0" ]]; then
+        # Recalculate % against effective compact limit using actual token counts
+        if [[ -n "$EFFECTIVE_COMPACT_LIMIT" && "$EFFECTIVE_COMPACT_LIMIT" != "0" ]]; then
             local used_tokens=$(( CTX_INPUT + CTX_CACHE_CREATE + CTX_CACHE_READ ))
             if (( used_tokens > 0 )); then
-                pct=$(( used_tokens * 100 / AUTO_COMPACT_WINDOW ))
+                pct=$(( used_tokens * 100 / EFFECTIVE_COMPACT_LIMIT ))
             elif (( CTX_SIZE > 0 )); then
                 # Fallback: estimate from percentage (less precise)
                 local used_approx=$(( pct * CTX_SIZE / 100 ))
-                pct=$(( used_approx * 100 / AUTO_COMPACT_WINDOW ))
+                pct=$(( used_approx * 100 / EFFECTIVE_COMPACT_LIMIT ))
             fi
             if (( pct > 100 )); then pct=100; fi
         fi
