@@ -13,7 +13,7 @@ Forked from [daniel3303/ClaudeCodeStatusLine](https://github.com/daniel3303/Clau
 
 - **NerdFont icons** with automatic text fallbacks
 - **Configurable segments** — show exactly the info you want
-- **Presets** — Minimal, Standard, Full, or Custom segment selection
+- **Presets** — Minimal, Standard, Pottekkat, Full, or Custom
 - **Color-coded indicators** — green/yellow/red based on usage levels
 - **Progress bars** — visual context and rate limit usage
 - **Auto-compact aware** — context % reflects your configured compact window
@@ -32,6 +32,48 @@ Forked from [daniel3303/ClaudeCodeStatusLine](https://github.com/daniel3303/Clau
   - Output style
   - 5-hour and 7-day rate limits with reset times
   - Extra usage credits
+
+## Presets
+
+### Minimal
+
+Just the essentials: model, context usage, and git branch.
+
+![Minimal preset](screenshots/minimal.png)
+
+```
+model, context, git
+```
+
+### Standard (recommended)
+
+Clean display with session stats and rate limits.
+
+![Standard preset](screenshots/standard.png)
+
+```
+agent, worktree, model, context, git, directory, duration, cost, lines, effort, rate_5h, rate_7d, extra
+```
+
+### Pottekkat
+
+Standard with token counts and output style.
+
+![Pottekkat preset](screenshots/pottekkat.png)
+
+```
+agent, worktree, model, context, git, directory, duration, cost, lines, tokens, effort, style, rate_5h, rate_7d, extra
+```
+
+### Full
+
+Everything including version, API time percentage, and all segments.
+
+![Full preset](screenshots/full.png)
+
+```
+agent, worktree, model, context, git, directory, duration, cost, lines, tokens, effort, version, style, api_time, rate_5h, rate_7d, extra
+```
 
 ## Installation
 
@@ -92,7 +134,7 @@ The installer creates a config file at `~/.claude/statusline-config.json`:
 ```json
 {
   "nerdfonts": true,
-  "segments": "agent,worktree,model,context,git,directory,duration,cost,lines,tokens,effort,style,rate_5h,rate_7d,extra",
+  "segments": "agent,worktree,model,context,git,directory,duration,cost,lines,effort,rate_5h,rate_7d,extra",
   "context_style": "bar",
   "rate_style": "bar"
 }
@@ -128,24 +170,6 @@ The installer creates a config file at `~/.claude/statusline-config.json`:
 | `rate_5h` | 5-hour rate limit | Pro/Max subscribers |
 | `rate_7d` | 7-day rate limit | Pro/Max subscribers |
 | `extra` | Extra usage credits | When enabled |
-
-### Presets
-
-**Minimal** — Just the essentials:
-```
-model, context, git
-```
-
-**Standard** (recommended) — Clean display with rate limits below:
-```
-agent, worktree, model, context, git, directory, duration, cost, lines, effort
-+ rate_5h, rate_7d, extra (second line)
-```
-
-**Full** — Everything including tokens, version, and API time:
-```
-All segments enabled
-```
 
 ### Customizing Icons
 

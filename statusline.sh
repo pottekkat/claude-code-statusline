@@ -142,7 +142,7 @@ setup_icons() {
 
 # ── JSON helpers ──────────────────────────────────────────────────────────────
 jval() {
-    echo "$INPUT" | jq -r "$1 // empty" 2>/dev/null
+    echo "$INPUT" | jq -r "$1 // empty" 2>/dev/null || true
 }
 
 jval_num() {
@@ -366,7 +366,7 @@ main() {
     RATE_7D_PCT=$(jval '.rate_limits.seven_day.used_percentage')
     RATE_7D_RESET=$(jval '.rate_limits.seven_day.resets_at')
     VERSION=$(jval '.version')
-    OUTPUT_STYLE=$(jval '.output_style.name')
+    OUTPUT_STYLE=$(echo "$INPUT" | jq -r 'if .output_style | type == "object" then .output_style.name // empty elif .output_style | type == "string" then .output_style else empty end' 2>/dev/null || true)
     AGENT_NAME=$(jval '.agent.name')
     WORKTREE_NAME=$(jval '.worktree.name')
     WORKTREE_BRANCH=$(jval '.worktree.branch')

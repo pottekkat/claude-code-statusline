@@ -259,7 +259,8 @@ main() {
     preset=$(prompt_choice "Choose a preset:" \
         "Minimal    - Model, context, git branch" \
         "Standard   - Most info on one clean line (recommended)" \
-        "Full       - Everything including tokens, version, style" \
+        "Pottekkat  - Standard + tokens, output style" \
+        "Full       - Everything including version, API time" \
         "Custom     - Choose individual segments")
 
     local segments=""
@@ -278,10 +279,14 @@ main() {
             info "Standard preset selected"
             ;;
         3)
+            segments="agent,worktree,model,context,git,directory,duration,cost,lines,tokens,effort,style,rate_5h,rate_7d,extra"
+            info "Pottekkat preset selected"
+            ;;
+        4)
             segments="agent,worktree,model,context,git,directory,duration,cost,lines,tokens,effort,version,style,api_time,rate_5h,rate_7d,extra"
             info "Full preset selected"
             ;;
-        4)
+        5)
             segments=$(select_segments)
             info "Custom segments: $segments"
             ;;
