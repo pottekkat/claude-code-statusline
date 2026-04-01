@@ -147,7 +147,7 @@ jval() {
 
 jval_num() {
     local v
-    v=$(echo "$INPUT" | jq -r "$1 // 0" 2>/dev/null)
+    v=$(echo "$INPUT" | jq -r "$1 // 0" 2>/dev/null || true)
     echo "${v:-0}"
 }
 
@@ -200,9 +200,9 @@ color_by_pct() {
 fmt_tokens() {
     local n=$1
     if (( n >= 1000000 )); then
-        printf "%.1fM" "$(echo "scale=1; $n / 1000000" | bc)"
+        printf "%d.%dM" $(( n / 1000000 )) $(( (n % 1000000) / 100000 ))
     elif (( n >= 1000 )); then
-        printf "%.1fk" "$(echo "scale=1; $n / 1000" | bc)"
+        printf "%d.%dk" $(( n / 1000 )) $(( (n % 1000) / 100 ))
     else
         printf "%d" "$n"
     fi
