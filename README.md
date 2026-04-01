@@ -2,7 +2,12 @@
 
 A configurable statusline for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with NerdFont icons and text fallbacks.
 
+> [!NOTE]
+> This project is entirely vibecoded.
+
 Forked from [daniel3303/ClaudeCodeStatusLine](https://github.com/daniel3303/ClaudeCodeStatusLine) and [kamranahmedse/claude-statusline](https://github.com/kamranahmedse/claude-statusline).
+
+![Claude Code Statusline](screenshot.png)
 
 ## Features
 
