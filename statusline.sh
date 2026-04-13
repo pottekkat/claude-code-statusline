@@ -580,6 +580,7 @@ main() {
     # Effort (only show when non-default)
     if has_segment "effort" && [[ -n "$EFFORT" && "$EFFORT" != "default" ]]; then
         case "$EFFORT" in
+            max)    _append "${white}$(icon "$ICON_EFFORT")${br_magenta}Max effort${reset}";;
             high)   _append "${white}$(icon "$ICON_EFFORT")${magenta}High effort${reset}";;
             low)    _append "${white}$(icon "$ICON_EFFORT")Low effort${reset}";;
             medium) _append "${white}$(icon "$ICON_EFFORT")Medium effort${reset}";;
