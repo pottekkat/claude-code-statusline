@@ -483,6 +483,16 @@ main() {
         _append "${bold}${model_color}${model_text}${reset}"
     fi
 
+    # Effort (only show when non-default)
+    if has_segment "effort" && [[ -n "$EFFORT" && "$EFFORT" != "default" ]]; then
+        case "$EFFORT" in
+            max)    _append "${white}$(icon "$ICON_EFFORT")${br_magenta}Max effort${reset}";;
+            high)   _append "${white}$(icon "$ICON_EFFORT")${magenta}High effort${reset}";;
+            low)    _append "${white}$(icon "$ICON_EFFORT")Low effort${reset}";;
+            medium) _append "${white}$(icon "$ICON_EFFORT")Medium effort${reset}";;
+        esac
+    fi
+
     # Context usage
     if has_segment "context"; then
         local pct=${CTX_PCT:-0}
@@ -575,16 +585,6 @@ main() {
     # Tokens
     if has_segment "tokens" && (( TOTAL_INPUT > 0 )); then
         _append "${white}$(icon "$ICON_TOKENS")${green}$(fmt_tokens $TOTAL_INPUT) ↑${reset}  ${br_yellow}$(fmt_tokens $TOTAL_OUTPUT) ↓${reset}"
-    fi
-
-    # Effort (only show when non-default)
-    if has_segment "effort" && [[ -n "$EFFORT" && "$EFFORT" != "default" ]]; then
-        case "$EFFORT" in
-            max)    _append "${white}$(icon "$ICON_EFFORT")${br_magenta}Max effort${reset}";;
-            high)   _append "${white}$(icon "$ICON_EFFORT")${magenta}High effort${reset}";;
-            low)    _append "${white}$(icon "$ICON_EFFORT")Low effort${reset}";;
-            medium) _append "${white}$(icon "$ICON_EFFORT")Medium effort${reset}";;
-        esac
     fi
 
     # Version
