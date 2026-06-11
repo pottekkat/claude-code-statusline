@@ -30,18 +30,21 @@ RATE_STYLE="bar"       # "bar" | "percent"
 
 # ── NerdFont Icons (used when nerdfonts=true) ─────────────────────────────────
 # Find more icons at https://www.nerdfonts.com/cheat-sheet
-NF_ICON_MODEL="󱚡"             # Robot face         — model name
-NF_ICON_CONTEXT="󰍛"           # Memory chip        — context window usage
+# IMPORTANT: keep every NerdFont icon below SINGLE-WIDTH (codepoint < U+F0000).
+# Material Design glyphs (>= U+F0000) render double-width but Claude Code's
+# width calc counts them as 1 cell, which shifts and corrupts the statusline.
+NF_ICON_MODEL=""             # Microchip          — model name
+NF_ICON_CONTEXT=""             # Server             — context window usage
 NF_ICON_GIT=""                # Git branch         — git branch name
 NF_ICON_FOLDER=""              # Folder             — current directory
-NF_ICON_CLOCK="󰥔"             # Clock              — session duration
+NF_ICON_CLOCK=""             # Clock              — session duration
 NF_ICON_EFFORT=""             # Lightning bolt     — thinking effort
-NF_ICON_AGENT="󰛦"             # Robot outline      — agent name
-NF_ICON_WORKTREE="󰘬"          # Source branch      — worktree
-NF_ICON_VERSION="󰅩"             # Code brackets      — claude code version
-NF_ICON_STYLE="󰏘"             # Paint brush        — output style
-NF_ICON_TOKENS="󰚞"            # Counter            — token counts
-NF_ICON_RATE="󰔟"              # Hourglass          — rate limits
+NF_ICON_AGENT=""             # Android            — agent name
+NF_ICON_WORKTREE=""             # Code fork          — worktree
+NF_ICON_VERSION=""             # Tag                — claude code version
+NF_ICON_STYLE=""             # Paint brush        — output style
+NF_ICON_TOKENS=""             # Hashtag            — token counts
+NF_ICON_RATE=""             # Hourglass          — rate limits
 NF_ICON_DIRTY="*"              # Dirty indicator    — uncommitted changes
 NF_ICON_BAR_FULL="█"           # Progress bar fill
 NF_ICON_BAR_EMPTY="░"          # Progress bar empty
